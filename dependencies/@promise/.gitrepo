@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/evaera/roblox-lua-promise
+	branch = master
+	commit = 49deee5d514c8916e9085260e1bb30509ac40b82
+	parent = 45bbc77aa182af62e915ba9cb74f04332f3954ed
+	method = merge
+	cmdver = 0.4.3
