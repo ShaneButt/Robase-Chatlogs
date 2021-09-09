@@ -1,0 +1,10 @@
+{
+  "name": "Robase-Chatlogs",
+  "tree": {
+    "$className": "DataModel",
+
+    "ServerScriptService": {
+        "$path": "src/server"
+      }
+    }
+}
