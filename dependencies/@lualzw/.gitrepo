@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/Rochet2/lualzw
+	branch = master
+	commit = 424d9c941157fe049f0185e896173ab4b2f74c31
+	parent = c3633a06f02be8eb0bcd8ea65f624a171afc6114
+	method = merge
+	cmdver = 0.4.3
