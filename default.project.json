@@ -1,23 +1,59 @@
 {
   "name": "Robase-Chatlogs",
+  "globIgnorePaths": [
+    "src/ChatlogPlugin"
+  ],
   "tree": {
     "$className": "DataModel",
 
     "ServerScriptService": {
       "$className": "ServerScriptService",
-      "$path": "src/server",
+      "$path": "src",
+      "$ignoreUnknownInstances": true,
       
       "RobaseChatlog": {
-        "$path": "src/server/ChatlogPlugin",
+        "$path": "src/ChatlogPlugin",
 
         "Vendor": {
           "$className": "Folder",
             
           "RobaseService": {
             "$path": "dependencies/@robase/src/RobaseService"
+          },
+          "Promise": {
+            "$path": "dependencies/@promise/lib"
           }
         }
 
+      }
+    },
+
+    "Workspace":{
+      "$className": "Workspace",
+
+      "Baseplate": {
+        "$className": "Part",
+        
+        "$properties": {
+          "Position": [0.0, -2.0, 0.0 ],
+          "Locked": true,
+          "Anchored": true,
+          "Size": [ 128.0, 4.0, 128.0 ],
+          "Color": [0.121569, 0.501961, 0.113725]
+        },
+  
+        "Texture": {
+          "$className": "Texture",
+          
+          "$properties": {
+            "Texture": "rbxassetid://6372755229",
+            "Transparency": 0.5,
+            "Face": "Top",
+            "Color3": [0,0,0],
+            "StudsPerTileU": 8,
+            "StudsPerTileV": 8
+          }
+        }
       }
     }
   }
