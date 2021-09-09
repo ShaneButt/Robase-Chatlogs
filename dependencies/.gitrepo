@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/Arvoria/RobaseService
+	branch = main
+	commit = 9f653514d1a06041e86537aa5009c260cc60533b
+	parent = 6654deff126b0c32ad25b72dd9faca00c268d360
+	method = merge
+	cmdver = 0.4.3

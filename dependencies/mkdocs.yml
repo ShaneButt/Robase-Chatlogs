@@ -1,0 +1,79 @@
+site_name: Robase Documentation
+site_url: http://info.arvorian.com/RobaseService/
+repo_url: https://github.com/Arvoria/RobaseService
+repo_name: Arvoria/RobaseService
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.critic
+  - pymdownx.caret
+  - pymdownx.tilde
+  - pymdownx.mark
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - attr_list
+  - footnotes
+  - def_list
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      extend_pygments_lang: [
+        "name": "lua-api-code",
+        "lang": "lua",
+        "options": [
+          css_class: "api-code"
+        ]
+      ]
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+      options:
+        custom_icons:
+          - overrides/.icons
+
+extra_css: 
+  - stylesheets/extra.css
+  - stylesheets/admonitions/stop.css
+  - stylesheets/admonitions/caution.css
+  - stylesheets/admonitions/advice.css
+  - stylesheets/admonitions/info.css
+  - stylesheets/admonitions/crossref.css
+  - stylesheets/admonitions/todo.css
+
+theme:
+  name: material
+  custom_dir: overrides
+  font:
+    text: Encode Sans
+    code: Fira Code
+  logo: img/ai-logo-flat.svg
+  features:
+    - navigation.expand
+    - navigation.top
+    - navigation.tabs
+    - navigation.tabs.sticky
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Arvoria
+
+nav: 
+  - 'Home': 'index.md'
+  - "About": 'introduction.md'
+  - "Guide": 
+    - 'Installation': 'Guide/installation.md'
+    - 'Firebase Setup': 'Guide/firebase-setup.md'
+    - 'Robase Setup': 'Guide/robase-setup.md'
+    - 'Usage Guide': 'Guide/usage.md'
+  - "API Reference":
+    - 'Reference': 'API/reference.md'
+    - 'RobaseService': 'API/RobaseService.md'
+    - 'Robase':
+      - 'Promise-like Methods': 'API/Robase/Promiselikes.md'
+      - 'Async Methods': 'API/Robase/AsyncMethods.md'
+      - 'Query Methods': 'API/Robase/QueryMethods.md'
+  - "Issue Reporting": 'issue-reporting.md'
+  - "Donating": 'donating.md'
