@@ -1,0 +1,10 @@
+{
+	"grammarly.userWords": [
+		"Robase",
+		"evaera",
+		"loleris"
+	],
+	"Lua.diagnostics.disable": [
+		"redundant-parameter"
+	]
+}
