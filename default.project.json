@@ -4,7 +4,21 @@
     "$className": "DataModel",
 
     "ServerScriptService": {
-        "$path": "src/server"
+      "$className": "ServerScriptService",
+      "$path": "src/server",
+      
+      "RobaseChatlog": {
+        "$path": "src/server/ChatlogPlugin",
+
+        "Vendor": {
+          "$className": "Folder",
+            
+          "RobaseService": {
+            "$path": "dependencies/@robase/src/RobaseService"
+          }
+        }
+
       }
     }
+  }
 }
