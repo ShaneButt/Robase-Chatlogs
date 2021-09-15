@@ -16,12 +16,12 @@
 
         "Vendor": {
           "$className": "Folder",
-            
-          "RobaseService": {
-            "$path": "dependencies/@robase/src"
-          },
+
           "Promise": {
             "$path": "dependencies/@promise/src"
+          },
+          "Llama": {
+            "$path": "dependencies/@llama/src"
           }
         }
 

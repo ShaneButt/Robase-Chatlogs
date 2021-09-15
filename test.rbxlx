@@ -25,8 +25,12 @@ local Plugin = {  }
 Plugin.Dependencies = {
 	Promise = require(Vendor:FindFirstChild("Promise")),
 	RobaseService = require(Vendor:FindFirstChild("RobaseService")),
+	Llama = require(Vendor:FindFirstChild("Llama"))
 }
-Plugin.ChatHistory = {  }
+
+local Dictionary = Plugin.Dependencies.Llama.Dictionary
+
+Plugin.ChatHistory = Dictionary.fromLists()
 Plugin.Promises = {  }
 Plugin.IsCollecting = false
 
@@ -62,14 +66,24 @@ function Plugin.collect(chatData)
 	if Plugin.IsCollecting then
 		print(chatData)
 
-		Plugin.ChatHistory[tostring(chatData.SpeakerUserId)] = {
+
+		Plugin.ChatHistory = Dictionary.copyDeep(Plugin.ChatHistory)
+		Dictionary.merge(Plugin.ChatHistory[tostring(chatData.SpeakerUserId)], {
 			[tostring(chatData.ID)] = {
 				Content = chatData.Message,
 				Channel = chatData.OriginalChannel,
 				Time = DateTime.fromUnixTimestamp(chatData.Time)
 			}
-		}
+		})
+--[[ 		Plugin.ChatHistory[tostring(chatData.SpeakerUserId)] = {
+			[tostring(chatData.ID)] = {
+				Content = chatData.Message,
+				Channel = chatData.OriginalChannel,
+				Time = DateTime.fromUnixTimestamp(chatData.Time)
+			}
+		} ]]
 	end
+
 	return chatData
 end
 
@@ -103,7 +117,7 @@ game.Players.PlayerAdded:Connect(function(player)
 		player.CharacterAppearanceLoaded:Connect(function(character)
 		print("waiting")
 		task.wait(10)
-		plugin.start(60)
+		plugin.start(20)
 	end)
 end)</string>
         </Properties>
@@ -113,6 +127,2610 @@ end)</string>
           <string name="Name">Vendor</string>
         </Properties>
         <Item class="ModuleScript" referent="4">
+          <Properties>
+            <string name="Name">Llama</string>
+            <string name="Source">local Llama = {
+	Dictionary = require(script.Dictionary),
+	List = require(script.List),
+	Set = require(script.Set),
+
+	equalObjects = require(script.equalObjects),
+	isEmpty = require(script.isEmpty),
+
+	None = require(script.None),
+}
+
+return Llama</string>
+          </Properties>
+          <Item class="ModuleScript" referent="5">
+            <Properties>
+              <string name="Name">Dictionary</string>
+              <string name="Source">local Dictionary = {
+	copy = require(script.copy),
+	copyDeep = require(script.copyDeep),
+	count = require(script.count),
+	equals = require(script.equals),
+	equalsDeep = require(script.equalsDeep),
+	every = require(script.every),
+	filter = require(script.filter),
+	flatten = require(script.flatten),
+	flip = require(script.flip),
+	fromLists = require(script.fromLists),
+	has = require(script.has),
+	includes = require(script.includes),
+	join = require(script.merge),
+	joinDeep = require(script.mergeDeep),
+	keys = require(script.keys),
+	map = require(script.map),
+	merge = require(script.merge),
+	mergeDeep = require(script.mergeDeep),
+	removeKey = require(script.removeKey),
+	removeKeys = require(script.removeKeys),
+	removeValue = require(script.removeValue),
+	removeValues = require(script.removeValues),
+	set = require(script.set),
+	some = require(script.some),
+	update = require(script.update),
+	values = require(script.values),
+}
+
+return Dictionary</string>
+            </Properties>
+            <Item class="ModuleScript" referent="6">
+              <Properties>
+                <string name="Name">copy</string>
+                <string name="Source">local Dictionary = script.Parent
+
+local Llama = Dictionary.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function copy(dictionary)
+	assert(validate(dictionary))
+	
+	local new = {}
+
+	for key, value in pairs(dictionary) do
+		new[key] = value
+	end
+
+	return new
+end
+
+return copy</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="7">
+              <Properties>
+                <string name="Name">copyDeep</string>
+                <string name="Source">local Dictionary = script.Parent
+
+local Llama = Dictionary.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function copyDeep(dictionary)
+	assert(validate(dictionary))
+	
+	local new = {}
+
+	for key, value in pairs(dictionary) do
+		if type(value) == "table" then
+			new[key] = copyDeep(value)
+		else
+			new[key] = value
+		end
+	end
+
+	return new
+end
+
+return copyDeep</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="8">
+              <Properties>
+                <string name="Name">count</string>
+                <string name="Source">local Dictionary = script.Parent
+
+local Llama = Dictionary.Parent
+local t = require(Llama.t)
+
+local function alwaysTrue()
+	return true
+end
+
+local validate = t.tuple(t.table, t.optional(t.callback))
+
+local function count(dictionary, predicate)
+	assert(validate(dictionary, predicate))
+
+	predicate = predicate or alwaysTrue
+	
+	local counter = 0
+
+	for key, value in pairs(dictionary) do
+		if predicate(value, key) then
+			counter = counter + 1
+		end
+	end
+
+	return counter
+end
+
+return count</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="9">
+              <Properties>
+                <string name="Name">equals</string>
+                <string name="Source">local Dictionary = script.Parent
+
+local Llama = Dictionary.Parent
+local equalObjects = require(Llama.equalObjects)
+
+local function compare(a, b)
+	if type(a) ~= "table" or type(b) ~= "table" then
+		return a == b
+	end
+
+	for key, value in pairs(a) do
+		if b[key] ~= value then
+			return false
+		end
+	end
+
+	for key, value in pairs(b) do
+		if a[key] ~= value then
+			return false
+		end
+	end
+
+	return true
+end
+
+local function equals(...)
+	if equalObjects(...) then
+		return true
+	end
+
+	local argCount = select('#', ...)
+	local firstObject = select(1, ...)
+
+	for i = 2, argCount do
+		local object = select(i, ...)
+
+		if not compare(firstObject, object) then
+			return false
+		end
+	end
+
+	return true
+end
+
+return equals</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="10">
+              <Properties>
+                <string name="Name">equalsDeep</string>
+                <string name="Source">local Dictionary = script.Parent
+
+local Llama = Dictionary.Parent
+local equalObjects = require(Llama.equalObjects)
+
+local function compareDeep(a, b)
+	if type(a) ~= "table" or type(b) ~= "table" then
+		return a == b
+	end
+
+	for key, value in pairs(a) do
+		if not compareDeep(b[key], value) then
+			return false
+		end
+	end
+
+	for key, value in pairs(b) do
+		if not compareDeep(a[key], value) then
+			return false
+		end
+	end
+
+	return true
+end
+
+local function equalsDeep(...)
+	if equalObjects(...) then
+		return true
+	end
+
+	local argCount = select('#', ...)
+	local firstObject = select(1, ...)
+
+	for i = 2, argCount do
+		local object = select(i, ...)
+
+		if not compareDeep(firstObject, object) then
+			return false
+		end
+	end
+
+	return true
+end
+
+return equalsDeep</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="11">
+              <Properties>
+                <string name="Name">every</string>
+                <string name="Source">local Dictionary = script.Parent
+
+local Llama = Dictionary.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.callback)
+
+local function every(dictionary, predicate)
+	assert(validate(dictionary, predicate))
+	
+	for key, value in pairs(dictionary) do
+		if not predicate(value, key) then
+			return false
+		end
+	end
+
+	return true
+end
+
+return every</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="12">
+              <Properties>
+                <string name="Name">filter</string>
+                <string name="Source">local Dictionary = script.Parent
+
+local Llama = Dictionary.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.callback)
+
+local function filter(dictionary, filterer)
+	assert(validate(dictionary, filterer))
+
+	local new = {}
+
+	for key, value in pairs(dictionary) do
+		if filterer(value, key) then
+			new[key] = value
+		end
+	end
+	
+	return new
+end
+
+return filter</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="13">
+              <Properties>
+                <string name="Name">flatten</string>
+                <string name="Source">local Dictionary = script.Parent
+
+local Llama = Dictionary.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.optional(t.intersection(t.integer, t.numberMin(0))))
+
+local function flatten(dictionary, depth)
+	assert(validate(dictionary, depth))
+	
+	local new = {}
+
+	for key, value in pairs(dictionary) do
+		if type(value) == "table" and (not depth or depth > 0) then
+			local subDictionary = flatten(value, depth and depth - 1)
+
+			for newKey, newValue in pairs(new) do
+				subDictionary[newKey] = newValue
+			end
+
+			new = subDictionary
+		else
+			new[key] = value
+		end
+	end
+
+	return new
+end
+
+return flatten</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="14">
+              <Properties>
+                <string name="Name">flip</string>
+                <string name="Source">local Dictionary = script.Parent
+
+local Llama = Dictionary.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function flip(dictionary)
+	assert(validate(dictionary))
+	
+	local new = {}
+
+	for key, value in pairs(dictionary) do
+		new[value] = key
+	end
+
+	return new
+end
+
+return flip</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="15">
+              <Properties>
+                <string name="Name">fromLists</string>
+                <string name="Source"><![CDATA[
+local Dictionary = script.Parent
+
+local Llama = Dictionary.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.table)
+
+local function fromLists(keys, values)
+	assert(validate(keys, values))
+
+	local keysLen = #keys
+
+	assert(keysLen == #values, "lists must be same size")
+
+	local dictionary = {}
+
+	for i = 1, keysLen do
+		dictionary[keys[i]] = values[i]
+	end
+
+	return dictionary
+end
+
+return fromLists]]></string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="16">
+              <Properties>
+                <string name="Name">has</string>
+                <string name="Source">local Dictionary = script.Parent
+
+local Llama = Dictionary.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.any)
+
+local function has(dictionary, key)
+	assert(validate(dictionary, key))
+	
+	return dictionary[key] ~= nil
+end
+
+return has</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="17">
+              <Properties>
+                <string name="Name">includes</string>
+                <string name="Source">local Dictionary = script.Parent
+
+local Llama = Dictionary.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function includes(dictionary, value)
+	assert(validate(dictionary))
+	
+	for _, v in pairs(dictionary) do
+		if v == value then
+			return true
+		end
+	end
+
+	return false
+end
+
+return includes</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="18">
+              <Properties>
+                <string name="Name">keys</string>
+                <string name="Source">local Dictionary = script.Parent
+
+local Llama = Dictionary.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function keys(dictionary)
+	assert(validate(dictionary))
+	
+	local keysList = {}
+
+	local index = 1
+
+	for key, _ in pairs(dictionary) do
+		keysList[index] = key
+		index = index + 1
+	end
+
+	return keysList
+end
+
+return keys</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="19">
+              <Properties>
+                <string name="Name">map</string>
+                <string name="Source">local Dictionary = script.Parent
+
+local Llama = Dictionary.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.callback)
+
+local function map(dictionary, mapper)
+	assert(validate(dictionary, mapper))
+
+	local new = {}
+
+	for key, value in pairs(dictionary) do
+		local newValue, newKey = mapper(value, key)
+		new[newKey or key] = newValue
+	end
+
+	return new
+end
+
+return map</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="20">
+              <Properties>
+                <string name="Name">merge</string>
+                <string name="Source">local Dictionary = script.Parent
+
+local Llama = Dictionary.Parent
+local None = require(Llama.None)
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function merge(...)
+	local new = {}
+
+	for dictionaryIndex = 1, select('#', ...) do
+		local dictionary = select(dictionaryIndex, ...)
+
+		if dictionary ~= nil then
+			assert(validate(dictionary))
+			
+			for key, value in pairs(dictionary) do
+				if value == None then
+					new[key] = nil
+				else
+					new[key] = value
+				end
+			end
+		end
+	end
+
+	return new
+end
+
+return merge</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="21">
+              <Properties>
+                <string name="Name">mergeDeep</string>
+                <string name="Source">local Dictionary = script.Parent
+local copyDeep = require(Dictionary.copyDeep)
+
+local Llama = Dictionary.Parent
+local None = require(script.Parent.Parent.None)
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function mergeDeep(...)
+	local new = {}
+
+	for dictionaryIndex = 1, select('#', ...) do
+		local dictionary = select(dictionaryIndex, ...)
+
+		if dictionary ~= nil then
+			assert(validate(dictionary))
+
+			for key, value in pairs(dictionary) do
+				if value == None then
+					new[key] = nil
+				elseif type(value) == "table" then
+					if new[key] == nil or type(new[key]) ~= "table" then
+						new[key] = copyDeep(value)
+					else
+						new[key] = mergeDeep(new[key], value)
+					end
+				else
+					new[key] = value
+				end
+			end
+		end
+	end
+
+	return new
+end
+
+return mergeDeep</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="22">
+              <Properties>
+                <string name="Name">removeKey</string>
+                <string name="Source">local Dictionary = script.Parent
+local copy = require(Dictionary.copy)
+
+local Llama = Dictionary.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function removeKey(dictionary, key)
+	assert(validate(dictionary))
+	
+	local new = copy(dictionary)
+
+	new[key] = nil
+
+	return new
+end
+
+return removeKey</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="23">
+              <Properties>
+                <string name="Name">removeKeys</string>
+                <string name="Source">local Dictionary = script.Parent
+local copy = require(Dictionary.copy)
+
+local Llama = Dictionary.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function removeKeys(dictionary, ...)
+	assert(validate(dictionary))
+	
+	local new = copy(dictionary)
+
+	for i = 1, select('#', ...) do
+		new[select(i, ...)] = nil
+	end
+
+	return new
+end
+
+return removeKeys</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="24">
+              <Properties>
+                <string name="Name">removeValue</string>
+                <string name="Source">local Dictionary = script.Parent
+
+local Llama = Dictionary.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function removeValue(dictionary, valueToRemove)
+	assert(validate(dictionary))
+
+	local new = {}
+
+	for key, value in pairs(dictionary) do
+		if value ~= valueToRemove then
+			new[key] = value
+		end
+	end
+
+	return new
+end
+
+return removeValue</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="25">
+              <Properties>
+                <string name="Name">removeValues</string>
+                <string name="Source">local Dictionary = script.Parent
+
+local Llama = Dictionary.Parent
+local t = require(Llama.t)
+
+local List = Llama.List
+local toSet = require(List.toSet)
+
+local validate = t.table
+
+local function removeValues(dictionary, ...)
+	assert(validate(dictionary))
+	
+	local valuesSet = toSet({...})
+
+	local new = {}
+
+	for key, value in pairs(dictionary) do
+		if not valuesSet[value] then
+			new[key] = value
+		end
+	end
+
+	return new
+end
+
+return removeValues</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="26">
+              <Properties>
+                <string name="Name">set</string>
+                <string name="Source">local Dictionary = script.Parent
+local copy = require(Dictionary.copy)
+
+local Llama = Dictionary.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.any)
+
+local function set(dictionary, key, value)
+	assert(validate(dictionary, key))
+
+	local new = copy(dictionary)
+
+	new[key] = value
+
+	return new
+end
+
+return set</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="27">
+              <Properties>
+                <string name="Name">some</string>
+                <string name="Source">local Dictionary = script.Parent
+
+local Llama = Dictionary.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.callback)
+
+local function some(dictionary, predicate)
+	assert(validate(dictionary, predicate))
+
+	for key, value in pairs(dictionary) do
+		if predicate(value, key) then
+			return true
+		end
+	end
+
+	return false
+end
+
+return some</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="28">
+              <Properties>
+                <string name="Name">update</string>
+                <string name="Source">local Dictionary = script.Parent
+local copy = require(Dictionary.copy)
+
+local Llama = Dictionary.Parent
+local t = require(Llama.t)
+
+local function noUpdate(value)
+	return value
+end
+
+local function call(callback, ...)
+	if type(callback) == "function" then
+		return callback(...)
+	end
+end
+
+local optionalCallbackType = t.optional(t.callback)
+local validate = t.tuple(t.table, t.any, optionalCallbackType, optionalCallbackType)
+
+local function update(dictionary, key, updater, callback)
+	assert(validate(dictionary, key, updater, callback))
+
+	updater = updater or noUpdate
+
+	local new = copy(dictionary)
+
+	if new[key] ~= nil then
+		new[key] = updater(new[key], key)
+	else
+		new[key] = call(callback, key)
+	end
+
+	return new
+end
+
+return update</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="29">
+              <Properties>
+                <string name="Name">values</string>
+                <string name="Source">local Dictionary = script.Parent
+
+local Llama = Dictionary.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function values(dictionary)
+	assert(validate(dictionary))
+	
+	local valuesList = {}
+
+	local index = 1
+
+	for _, value in pairs(dictionary) do
+		valuesList[index] = value
+		index = index + 1
+	end
+
+	return valuesList
+end
+
+return values</string>
+              </Properties>
+            </Item>
+          </Item>
+          <Item class="ModuleScript" referent="30">
+            <Properties>
+              <string name="Name">List</string>
+              <string name="Source">local List = {
+	append = require(script.push),
+	concat = require(script.concat),
+	concatDeep = require(script.concatDeep),
+	copy = require(script.copy),
+	copyDeep = require(script.copyDeep),
+	count = require(script.count),
+	create = require(script.create),
+	equals = require(script.equals),
+	equalsDeep = require(script.equalsDeep),
+	every = require(script.every),
+	filter = require(script.filter),
+	find = require(script.find),
+	findLast = require(script.findLast),
+	findWhere = require(script.findWhere),
+	findWhereLast = require(script.findWhereLast),
+	first = require(script.first),
+	flatten = require(script.flatten),
+	includes = require(script.includes),
+	insert = require(script.insert),
+	join = require(script.concat),
+	joinDeep = require(script.concatDeep),
+	last = require(script.last),
+	map = require(script.map),
+	pop = require(script.pop),
+	push = require(script.push),
+	reduce = require(script.reduce),
+	reduceRight = require(script.reduceRight),
+	removeIndex = require(script.removeIndex),
+	removeIndices = require(script.removeIndices),
+	removeValue = require(script.removeValue),
+	removeValues = require(script.removeValues),
+	reverse = require(script.reverse),
+	set = require(script.set),
+	shift = require(script.shift),
+	slice = require(script.slice),
+	some = require(script.some),
+	sort = require(script.sort),
+	splice = require(script.splice),
+	toSet = require(script.toSet),
+	unshift = require(script.unshift),
+	update = require(script.update),
+	zip = require(script.zip),
+	zipAll = require(script.zipAll),
+}
+
+return List</string>
+            </Properties>
+            <Item class="ModuleScript" referent="31">
+              <Properties>
+                <string name="Name">concat</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local None = require(Llama.None)
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function concat(...)
+	local new = {}
+	local index = 1
+
+	for listIndex = 1, select('#', ...) do
+		local list = select(listIndex, ...)
+
+		if list ~= nil then
+			assert(validate(list))
+
+			for _, v in ipairs(list) do
+				if v ~= None then
+					new[index] = v
+					index += 1
+				end
+			end
+		end
+	end
+
+	return new
+end
+
+return concat</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="32">
+              <Properties>
+                <string name="Name">concatDeep</string>
+                <string name="Source">local List = script.Parent
+local copyDeep = require(List.copyDeep)
+
+local Llama = List.Parent
+local None = require(Llama.None)
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function concatDeep(...)
+	local new = {}
+	local index = 1
+
+	for listIndex = 1, select('#', ...) do
+		local list = select(listIndex, ...)
+
+		if list ~= nil then
+			assert(validate(list))
+
+			for _, v in ipairs(list) do
+				if v ~= None then
+					if type(v) == "table" then
+						new[index] = copyDeep(v)
+					else
+						new[index] = v
+					end
+
+					index += 1
+				end
+			end
+		end
+	end
+
+	return new
+end
+
+return concatDeep</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="33">
+              <Properties>
+                <string name="Name">copy</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function copy(list)
+	assert(validate(list))
+
+	local new = {}
+
+	for i, v in ipairs(list) do
+		new[i] = v
+	end
+
+	return new
+end
+
+return copy</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="34">
+              <Properties>
+                <string name="Name">copyDeep</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function copyDeep(list)
+	assert(validate(list))
+
+	local new = {}
+
+	for i, v in ipairs(list) do
+		if type(v) == "table" then
+			new[i] = copyDeep(v)
+		else
+			new[i] = v
+		end
+	end
+
+	return new
+end
+
+return copyDeep</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="35">
+              <Properties>
+                <string name="Name">count</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local function alwaysTrue()
+	return true
+end
+
+local validate = t.tuple(t.table, t.optional(t.callback))
+
+local function count(list, predicate)
+	assert(validate(list, predicate))
+
+	predicate = predicate or alwaysTrue
+
+	local counter = 0
+
+	for i, v in ipairs(list) do
+		if predicate(v, i) then
+			counter += 1
+		end
+	end
+
+	return counter
+end
+
+return count</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="36">
+              <Properties>
+                <string name="Name">create</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.intersection(t.integer, t.numberMin(0)), t.any)
+
+local function recur(count, value)
+	assert(validate(count, value))
+
+	local list = {}
+
+	for i = 1, count do
+		list[i] = value
+	end
+
+	return list
+end
+
+return recur</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="37">
+              <Properties>
+                <string name="Name">equals</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local equalObjects = require(Llama.equalObjects)
+
+local function compare(a, b)
+	if type(a) ~= "table" or type(b) ~= "table" then
+		return a == b
+	end
+
+	local aLen = #a
+
+	if aLen ~= #b then
+		return false
+	end
+
+	for i = 1, #a do
+		if a[i] ~= b[i] then
+			return false
+		end
+	end
+
+	return true
+end
+
+local function equals(...)
+	if equalObjects(...) then
+		return true
+	end
+
+	local argCount = select('#', ...)
+	local firstObject = select(1, ...)
+
+	for i = 2, argCount do
+		local object = select(i, ...)
+
+		if not compare(firstObject, object) then
+			return false
+		end
+	end
+
+	return true
+end
+
+return equals</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="38">
+              <Properties>
+                <string name="Name">equalsDeep</string>
+                <string name="Source">local Dictionary = script.Parent
+
+local Llama = Dictionary.Parent
+local equalObjects = require(Llama.equalObjects)
+
+local function compareDeep(a, b)
+	if type(a) ~= "table" or type(b) ~= "table" then
+		return a == b
+	end
+
+	local aLen = #a
+
+	if aLen ~= #b then
+		return false
+	end
+
+	for i = 1, aLen do
+		if not compareDeep(a[i], b[i]) then
+			return false
+		end
+	end
+
+	return true
+end
+
+local function equalsDeep(...)
+	if equalObjects(...) then
+		return true
+	end
+
+	local argCount = select('#', ...)
+	local firstObject = select(1, ...)
+
+	for i = 2, argCount do
+		local object = select(i, ...)
+
+		if not compareDeep(firstObject, object) then
+			return false
+		end
+	end
+
+	return true
+end
+
+return equalsDeep</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="39">
+              <Properties>
+                <string name="Name">every</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.callback)
+
+local function every(list, predicate)
+	assert(validate(list, predicate))
+
+	for i, v in ipairs(list) do
+		if not predicate(v, i) then
+			return false
+		end
+	end
+
+	return true
+end
+
+return every</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="40">
+              <Properties>
+                <string name="Name">filter</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.callback)
+
+local function filter(list, filterer)
+	assert(validate(list, filterer))
+
+	local new = {}
+	local index = 1
+
+	for i, v in ipairs(list) do
+		if filterer(v, i) then
+			new[index] = v
+			index += 1
+		end
+	end
+
+	return new
+end
+
+return filter</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="41">
+              <Properties>
+                <string name="Name">find</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.optional(t.any), t.optional(t.integer))
+
+local function find(list, value, from)
+	assert(validate(list, value, from))
+
+	local len = #list
+
+	from = from or 1
+
+	if from &lt; 1 then
+		from = len + from
+	end
+
+	assert(from > 0 and from &lt;= len + 1, string.format("index %d out of bounds of list of length %d", from, len))
+	
+	for i = from, len do
+		if list[i] == value then
+			return i
+		end
+	end
+
+	return nil
+end
+
+return find</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="42">
+              <Properties>
+                <string name="Name">findLast</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.optional(t.any), t.optional(t.integer))
+
+local function findLast(list, value, from)
+	assert(validate(list, value, from))
+
+	local len = #list
+
+	if len &lt;= 0 then
+		return nil
+	end
+
+	from = from or len
+
+	if from &lt; 1 then
+		from = len + from
+	end
+
+	assert(from > 0 and from &lt;= len + 1, string.format("index %d out of bounds of list of length %d", from, len))
+
+	for i = from, 1, -1 do
+		if list[i] == value then
+			return i
+		end
+	end
+
+	return nil
+end
+
+return findLast</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="43">
+              <Properties>
+                <string name="Name">findWhere</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.callback, t.optional(t.integer))
+
+local function findWhere(list, predicate, from)
+	assert(validate(list, predicate, from))
+
+	local len = #list
+
+	from = from or 1
+
+	if from &lt; 1 then
+		from = len + from
+	end
+
+	assert(from > 0 and from &lt;= len + 1, string.format("index %d out of bounds of list of length %d", from, len))
+
+	for i = from, len do
+		if predicate(list[i], i) then
+			return i
+		end
+	end
+
+	return nil
+end
+
+return findWhere</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="44">
+              <Properties>
+                <string name="Name">findWhereLast</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.callback, t.optional(t.integer))
+
+local function findWhereLast(list, predicate, from)
+	assert(validate(list, predicate, from))
+
+	local len = #list
+
+	if len &lt;= 0 then
+		return nil
+	end
+
+	from = from or len
+
+	if from &lt; 1 then
+		from = len + from
+	end
+
+	assert(from > 0 and from &lt;= len + 1, string.format("index %d out of bounds of list of length %d", from, len))
+	
+	for i = from, 1, -1 do
+		if predicate(list[i], i) then
+			return i
+		end
+	end
+
+	return nil
+end
+
+return findWhereLast</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="45">
+              <Properties>
+                <string name="Name">first</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function first(list)
+	assert(validate(list))
+
+	return list[1]
+end
+
+return first</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="46">
+              <Properties>
+                <string name="Name">flatten</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.optional(t.intersection(t.integer, t.numberMin(0))))
+
+local function flatten(list, depth)
+	assert(validate(list))
+	
+	local new = {}
+	local index = 1
+
+	for _, v in ipairs(list) do
+		if type(v) == "table" and (not depth or depth > 0) then
+			local subList = flatten(v, depth and depth - 1)
+
+			for j = 1, #subList do
+				new[index] = subList[j]
+				index = index + 1
+			end
+		else
+			new[index] = v
+			index = index + 1
+		end
+	end
+
+	return new
+end
+
+return flatten</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="47">
+              <Properties>
+                <string name="Name">includes</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function includes(list, value)
+	assert(validate(list))
+
+	for _, v in ipairs(list) do
+		if v == value then
+			return true
+		end
+	end
+
+	return false
+end
+
+return includes</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="48">
+              <Properties>
+                <string name="Name">insert</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.optional(t.integer))
+
+local function insert(list, index, ...)
+	assert(validate(list, index))
+
+	local len = #list
+
+	if index &lt; 1 then
+		index = len + index
+	end
+
+	assert(index > 0 and index &lt;= len + 1, string.format("index %d out of bounds of list of length %d", index, len))
+
+	local new = {}
+	local resultIndex = 1
+	
+	for i = 1, len do
+		if i == index then
+			for j = 1, select('#', ...) do
+				new[resultIndex] = select(j, ...)
+				resultIndex = resultIndex + 1
+			end
+		end
+		
+		new[resultIndex] = list[i]
+		resultIndex = resultIndex + 1
+	end
+
+	return new
+end
+
+return insert</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="49">
+              <Properties>
+                <string name="Name">last</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function last(list)
+	assert(validate(list))
+
+	return list[#list]
+end
+
+return last</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="50">
+              <Properties>
+                <string name="Name">map</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.callback)
+
+local function map(list, mapper)
+	assert(validate(list, mapper))
+
+	local new = {}
+	local index = 1
+
+	for i, v in ipairs(list) do
+		local value = mapper(v, i)
+
+		if value ~= nil then
+			new[index] = value
+			index += 1
+		end
+	end
+
+	return new
+end
+
+return map</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="51">
+              <Properties>
+                <string name="Name">pop</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.optional(t.intersection(t.integer, t.numberMin(0))))
+
+local function pop(list, numPops)
+	assert(validate(list, numPops))
+
+	local len = #list
+
+	numPops = numPops or 1
+
+	assert(numPops > 0 and numPops &lt;= len + 1, string.format("index %d out of bounds of list of length %d", numPops, len))
+
+	local new = {}
+
+	for i = 1, #list - numPops do
+		new[i] = list[i]
+	end
+
+	return new
+end
+
+return pop</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="52">
+              <Properties>
+                <string name="Name">push</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function push(list, ...)
+	assert(validate(list))
+	
+	local new = {}
+	local len = #list
+
+	for i = 1, len do
+		new[i] = list[i]
+	end
+
+	for i = 1, select('#', ...) do
+		new[len + i] = select(i, ...)
+	end
+
+	return new
+end
+
+return push</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="53">
+              <Properties>
+                <string name="Name">reduce</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.callback)
+
+local function reduce(list, reducer, initialReduction)
+	assert(validate(list, reducer))
+
+	local reduction = initialReduction
+	local start = 1
+
+	if reduction == nil then
+		reduction = list[1]
+		start = 2
+	end
+
+	for i = start, #list do
+		reduction = reducer(reduction, list[i], i)
+	end
+
+	return reduction
+end
+
+return reduce</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="54">
+              <Properties>
+                <string name="Name">reduceRight</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.callback)
+
+local function reduceRight(list, reducer, initialReduction)
+	assert(validate(list, reducer))
+
+	local len = #list
+	local reduction = initialReduction
+	local start = len
+
+	if reduction == nil then
+		reduction = list[len]
+		start = len - 1
+	end
+
+	for i = start, 1, -1 do
+		reduction = reducer(reduction, list[i], i)
+	end
+
+	return reduction
+end
+
+return reduceRight</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="55">
+              <Properties>
+                <string name="Name">removeIndex</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.integer)
+
+local function removeIndex(list, indexToRemove)
+	assert(validate(list, indexToRemove))
+
+	local len = #list
+
+	if indexToRemove &lt; 1 then
+		indexToRemove += len
+	end
+
+	assert(indexToRemove > 0 and indexToRemove &lt;= len, string.format("index %d out of bounds of list of length %d", indexToRemove, len))
+
+	local new = {}
+	local index = 1
+
+	for i, v in ipairs(list) do
+		if i ~= indexToRemove then
+			new[index] = v
+			index += 1
+		end
+	end
+
+	return new
+end
+
+return removeIndex</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="56">
+              <Properties>
+                <string name="Name">removeIndices</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validateList = t.table
+local validateIndex = t.integer
+
+local function removeIndices(list, ...)
+	assert(validateList(list))
+
+	local len = #list
+	local indicesToRemove = {}
+
+	for i = 1, select('#', ...) do
+		local index = select(i, ...)
+		
+		assert(validateIndex(index))
+
+		if index &lt; 1 then
+			index = len + index
+		end
+
+		assert(index > 0 and index &lt;= len, string.format("index %d out of bounds of list of length %d", index, len))
+
+		indicesToRemove[index] = true
+	end
+	
+	local new = {}
+	local index = 1
+
+	for i = 1, len do
+		if not indicesToRemove[i] then
+			new[index] = list[i]
+			index = index + 1
+		end
+	end
+
+	return new
+end
+
+return removeIndices</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="57">
+              <Properties>
+                <string name="Name">removeValue</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function removeValue(list, value)
+	assert(validate(list))
+
+	local new = {}
+	local index = 1
+
+	for _, v in ipairs(list) do
+		if v ~= value then
+			new[index] = v
+			index += 1
+		end
+	end
+
+	return new
+end
+
+return removeValue</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="58">
+              <Properties>
+                <string name="Name">removeValues</string>
+                <string name="Source">local List = script.Parent
+local toSet = require(List.toSet)
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function removeValue(list, ...)
+	assert(validate(list))
+
+	local valuesSet = toSet({...})
+	local new = {}
+	local index = 1
+
+	for _, v in ipairs(list) do
+		if not valuesSet[v] then
+			new[index] = v
+			index += 1
+		end
+	end
+
+	return new
+end
+
+return removeValue</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="59">
+              <Properties>
+                <string name="Name">reverse</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function reverse(list)
+	assert(validate(list))
+
+	local new = {}
+
+	local back = #list + 1
+
+	for i, _ in ipairs(list) do
+		new[i] = list[back - i]
+	end
+
+	return new
+end
+
+return reverse</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="60">
+              <Properties>
+                <string name="Name">set</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.integer)
+
+local function set(list, index, value)
+	assert(validate(list, index))
+	
+	local len = #list
+
+	if index &lt; 0 then
+		index = len + index
+	end
+
+	assert(index > 0 and index &lt;= len + 1, string.format("index %d out of bounds of list of length %d", index, len))
+
+	local new = {}
+	local indexNew = 1
+
+	for i = 1, len do
+		if i == index then
+			new[indexNew] = value
+		else
+			new[indexNew] = list[i]
+		end
+
+		indexNew += 1
+	end
+
+	return new
+end
+
+return set</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="61">
+              <Properties>
+                <string name="Name">shift</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.optional(t.intersection(t.integer, t.numberMin(0))))
+
+local function shift(list, numPlaces)
+	assert(validate(list, numPlaces))
+
+	local len = #list
+	
+	numPlaces = numPlaces or 1
+
+	assert(numPlaces > 0 and numPlaces &lt;= len + 1, string.format("index %d out of bounds of list of length %d", numPlaces, len))
+	
+	local new = {}
+
+	for i = 1 + numPlaces, len do
+		new[i - numPlaces] = list[i]
+	end
+
+	return new
+end
+
+return shift</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="62">
+              <Properties>
+                <string name="Name">slice</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local indexType = t.optional(t.integer)
+local validate = t.tuple(t.table, indexType, indexType)
+
+local function slice(list, from, to)
+	assert(validate(list, from, to))
+	
+	local len = #list
+
+	from = from or 1
+	to = to or len
+
+	if from &lt; 1 then
+		from = len + from
+	end
+
+	if to &lt; 1 then
+		to = len + to
+	end
+
+	assert(from > 0 and from &lt;= len + 1, string.format("index %d out of bounds of list of length %d", from, len))
+	assert(to > 0 and to &lt;= len + 1, string.format("index %d out of bounds of list of length %d", to, len))
+	assert(from &lt;= to, string.format("start index %d cannot be greater than end index %d", from, to))
+
+	local new = {}
+	local index = 1
+
+	for i = from, to do
+		new[index] = list[i]
+		index = index + 1
+	end
+
+	return new
+end
+
+return slice</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="63">
+              <Properties>
+                <string name="Name">some</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.callback)
+
+local function some(list, predicate)
+	assert(validate(list, predicate))
+	
+	for i = 1, #list do
+		if predicate(list[i], i) then
+			return true
+		end
+	end
+
+	return false
+end
+
+return some</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="64">
+              <Properties>
+                <string name="Name">sort</string>
+                <string name="Source">local List = script.Parent
+local copy = require(List.copy)
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.optional(t.callback))
+
+local function sort(list, comparator)
+	assert(validate(list, comparator))
+	
+	local new = copy(list)
+
+	table.sort(new, comparator)
+
+	return new
+end
+
+return sort</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="65">
+              <Properties>
+                <string name="Name">splice</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local indexType = t.optional(t.integer)
+local validate = t.tuple(t.table, indexType, indexType)
+
+local function splice(list, from, to, ...)
+	assert(validate(list, from, to))
+	
+	local len = #list
+
+	from = from or 1
+	to = to or len + 1
+
+	if from &lt; 1 then
+		from = len + from
+	end
+
+	if to &lt; 1 then
+		to = len + to
+	end
+
+	assert(from > 0 and from &lt;= len + 1, string.format("index %d out of bounds of list of length %d", from, len))
+	assert(to > 0 and to &lt;= len + 1, string.format("index %d out of bounds of list of length %d", to, len))
+	assert(from &lt;= to, string.format("start index %d cannot be greater than end index %d", from, to))
+
+	local new = {}
+	local index = 1
+
+	for i = 1, from - 1 do
+		new[index] = list[i]
+		index = index + 1
+	end
+
+	for i = 1, select('#', ...) do
+		new[index] = select(i, ...)
+		index = index + 1
+	end
+
+	for i = to + 1, len do
+		new[index] = list[i]
+		index = index + 1
+	end
+
+	return new
+end
+
+return splice</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="66">
+              <Properties>
+                <string name="Name">toSet</string>
+                <string name="Source"><![CDATA[
+local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function toSet(list)
+	assert(validate(list))
+
+	local set = {}
+
+	for _, v in ipairs(list) do
+		set[v] = true
+	end
+
+	return set
+end
+
+return toSet]]></string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="67">
+              <Properties>
+                <string name="Name">unshift</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function unshift(list, ...)
+	assert(validate(list))
+
+	local argCount = select('#', ...)
+
+	local new = {}
+
+	for i = 1, argCount do
+		new[i] = select(i, ...)
+	end
+
+	for i, v in ipairs(list) do
+		new[argCount + i] = v
+	end
+
+	return new
+end
+
+return unshift</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="68">
+              <Properties>
+                <string name="Name">update</string>
+                <string name="Source">local List = script.Parent
+local copy = require(List.copy)
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local function noUpdate(value)
+	return value
+end
+
+local function call(callback, ...)
+	if type(callback) == "function" then
+		return callback(...)
+	end
+end
+
+local optionalCallbackType = t.optional(t.callback)
+local validate = t.tuple(t.table, t.integer, optionalCallbackType, optionalCallbackType)
+
+local function update(list, index, updater, callback)
+	assert(validate(list, index, updater, callback))
+
+	local len = #list
+
+	if index &lt; 0 then
+		index = len + index
+	end
+
+	assert(index > 0 and index &lt;= len + 1, string.format("index %d out of bounds of list of length %d", index, len))
+
+	updater = updater or noUpdate
+
+	local new = copy(list)
+
+	if new[index] ~= nil then
+		new[index] = updater(new[index], index)
+	else
+		new[index] = call(callback, index)
+	end
+
+	return new
+end
+
+return update</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="69">
+              <Properties>
+                <string name="Name">zip</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function zip(...)
+	local new = {}
+	local argCount = select('#', ...)
+
+	if argCount &lt;= 0 then
+		return new
+	end
+
+	local firstList = select(1, ...)
+
+	assert(validate(firstList))
+
+	local minLen = #firstList
+
+	for i = 2, argCount do
+		local list = select(i, ...)
+
+		assert(validate(list))
+
+		local len = #list
+
+		if len &lt; minLen then
+			minLen = len
+		end
+	end
+
+	for i = 1, minLen do
+		new[i] = {}
+		
+		for j = 1, argCount do
+			new[i][j] = select(j, ...)[i]
+		end
+	end
+
+	return new
+end
+
+return zip</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="70">
+              <Properties>
+                <string name="Name">zipAll</string>
+                <string name="Source">local List = script.Parent
+
+local Llama = List.Parent
+local None = require(Llama.None)
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function zipAll(...)
+	local new = {}
+	local argCount = select('#', ...)
+	local maxLen = 0
+
+	for i = 1, argCount do
+		local list = select(i, ...)
+
+		assert(validate(list))
+
+		local len = #list
+
+		if len > maxLen then
+			maxLen = len
+		end
+	end
+
+	for i = 1, maxLen do
+		new[i] = {}
+		
+		for j = 1, argCount do
+			local value = select(j, ...)[i]
+
+			if value == nil then
+				new[i][j] = None
+			else
+				new[i][j] = select(j, ...)[i]
+			end
+		end
+	end
+
+	return new
+end
+
+return zipAll</string>
+              </Properties>
+            </Item>
+          </Item>
+          <Item class="ModuleScript" referent="71">
+            <Properties>
+              <string name="Name">None</string>
+              <string name="Source">local None = newproxy(true)
+
+getmetatable(None).__tostring = function()
+	return "Llama.None"
+end
+
+return None</string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="72">
+            <Properties>
+              <string name="Name">Set</string>
+              <string name="Source">local Set = {
+	add = require(script.add),
+	copy = require(script.copy),
+	filter = require(script.filter),
+	fromList = require(script.fromList),
+	has = require(script.has),
+	intersection = require(script.intersection),
+	isSubset = require(script.isSubset),
+	isSuperset = require(script.isSuperset),
+	map = require(script.map),
+	subtract = require(script.subtract),
+	toList = require(script.toList),
+	union = require(script.union),
+}
+
+return Set</string>
+            </Properties>
+            <Item class="ModuleScript" referent="73">
+              <Properties>
+                <string name="Name">add</string>
+                <string name="Source">local Set = script.Parent
+
+local Llama = Set.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function add(set, ...)
+	assert(validate(set))
+
+	local new = {}
+
+	for key, _ in pairs(set) do
+		new[key] = true
+	end
+
+	for i = 1, select('#', ...) do
+		new[select(i, ...)] = true
+	end
+
+	return new
+end
+
+return add</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="74">
+              <Properties>
+                <string name="Name">copy</string>
+                <string name="Source">local Set = script.Parent
+
+local Llama = Set.Parent
+
+local Dictionary = Llama.Dictionary
+local copy = require(Dictionary.copy)
+
+return copy</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="75">
+              <Properties>
+                <string name="Name">filter</string>
+                <string name="Source">local Set = script.Parent
+
+local Llama = Set.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.callback)
+
+local function filter(set, filterer)
+	assert(validate(set, filterer))
+
+	local new = {}
+
+	for key, _ in pairs(set) do
+		if filterer(key) then
+			new[key] = true
+		end
+	end
+	
+	return new
+end
+
+return filter</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="76">
+              <Properties>
+                <string name="Name">fromList</string>
+                <string name="Source">local Set = script.Parent
+
+local Llama = Set.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function fromList(list)
+	assert(validate(list))
+	
+	local set = {}
+
+	for i = 1, #list do
+		set[list[i]] = true
+	end
+
+	return set
+end
+
+return fromList</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="77">
+              <Properties>
+                <string name="Name">has</string>
+                <string name="Source">local Set = script.Parent
+
+local Llama = Set.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.any)
+
+local function has(set, key)
+	assert(validate(set, key))
+	
+	return set[key] == true
+end
+
+return has</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="78">
+              <Properties>
+                <string name="Name">intersection</string>
+                <string name="Source">local Set = script.Parent
+
+local Llama = Set.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function intersection(...)
+	local new = {}
+	local argCount = select('#', ...)
+	local firstSet = select(1, ...)
+
+	assert(validate(firstSet))
+
+	for key, _ in pairs(firstSet) do
+		local intersects = true
+
+		for i = 2, argCount do
+			local set = select(i, ...)
+
+			assert(validate(set))
+
+			if set[key] == nil then
+				intersects = false
+				break
+			end
+		end
+
+		if intersects then
+			new[key] = true
+		end
+	end
+
+	return new
+end
+
+return intersection</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="79">
+              <Properties>
+                <string name="Name">isSubset</string>
+                <string name="Source"><![CDATA[
+local Set = script.Parent
+
+local Llama = Set.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.table)
+
+local function isSubset(subset, superset)
+	assert(validate(subset, superset))
+	
+	for key, value in pairs(subset) do
+		if superset[key] ~= value then
+			return false
+		end
+	end
+
+	return true
+end
+
+return isSubset]]></string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="80">
+              <Properties>
+                <string name="Name">isSuperset</string>
+                <string name="Source"><![CDATA[
+local Set = script.Parent
+local isSubset = require(Set.isSubset)
+
+local Llama = Set.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.table)
+
+local function isSuperset(superset, subset)
+	assert(validate(superset, subset))
+	
+	return isSubset(subset, superset)
+end
+
+return isSuperset]]></string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="81">
+              <Properties>
+                <string name="Name">map</string>
+                <string name="Source">local Set = script.Parent
+
+local Llama = Set.Parent
+local t = require(Llama.t)
+
+local validate = t.tuple(t.table, t.callback)
+
+local function map(set, mapper)
+	assert(validate(set, mapper))
+
+	local new = {}
+
+	for key, _ in pairs(set) do
+		local newKey = mapper(key)
+
+		if newKey ~= nil then
+			new[newKey] = true
+		end
+	end
+
+	return new
+end
+
+return map</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="82">
+              <Properties>
+                <string name="Name">subtract</string>
+                <string name="Source">local Set = script.Parent
+
+local Llama = Set.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function subtract(set, ...)
+	assert(validate(set))
+
+	local new = {}
+
+	for key, _ in pairs(set) do
+		new[key] = true
+	end
+
+	for i = 1, select('#', ...) do
+		new[select(i, ...)] = nil
+	end
+
+	return new
+end
+
+return subtract</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="83">
+              <Properties>
+                <string name="Name">toList</string>
+                <string name="Source">local Set = script.Parent
+
+local Llama = Set.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function toList(set)
+	assert(validate(set))
+
+	local new = {}
+	local index = 1
+
+	for key, _ in pairs(set) do
+		new[index] = key
+		index = index + 1
+	end
+
+	return new
+end
+
+return toList</string>
+              </Properties>
+            </Item>
+            <Item class="ModuleScript" referent="84">
+              <Properties>
+                <string name="Name">union</string>
+                <string name="Source">local Set = script.Parent
+
+local Llama = Set.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function union(...)
+	local new = {}
+
+	for i = 1, select('#', ...) do
+		local set = select(i, ...)
+
+		assert(validate(set))
+
+		for key, _ in pairs(set) do
+			new[key] = true
+		end
+	end
+
+	return new
+end
+
+return union</string>
+              </Properties>
+            </Item>
+          </Item>
+          <Item class="ModuleScript" referent="85">
+            <Properties>
+              <string name="Name">equalObjects</string>
+              <string name="Source">local function equalObjects(...)
+	local firstObject = select(1, ...)
+
+	for i = 2, select('#', ...) do
+		if firstObject ~= select(i, ...) then
+			return false
+		end
+	end
+
+	return true
+end
+
+return equalObjects</string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="86">
+            <Properties>
+              <string name="Name">isEmpty</string>
+              <string name="Source">local Llama = script.Parent
+local t = require(Llama.t)
+
+local validate = t.table
+
+local function isEmpty(table)
+	assert(validate(table))
+
+	return next(table) == nil
+end
+
+return isEmpty</string>
+            </Properties>
+          </Item>
+        </Item>
+        <Item class="ModuleScript" referent="87">
           <Properties>
             <string name="Name">Promise</string>
             <string name="Source"><![CDATA[--[[
@@ -1516,7 +4134,7 @@ end
 return Promise
 ]]></string>
           </Properties>
-          <Item class="ModuleScript" referent="5">
+          <Item class="ModuleScript" referent="88">
             <Properties>
               <string name="Name">init.spec</string>
               <string name="Source"><![CDATA[return function()
@@ -3141,7 +5759,7 @@ end
             </Properties>
           </Item>
         </Item>
-        <Item class="ModuleScript" referent="6">
+        <Item class="ModuleScript" referent="89">
           <Properties>
             <string name="Name">RobaseService</string>
             <string name="Source">local Robase = require(script.Robase)
@@ -3190,7 +5808,7 @@ end
 
 return RobaseService</string>
           </Properties>
-          <Item class="ModuleScript" referent="7">
+          <Item class="ModuleScript" referent="90">
             <Properties>
               <string name="Name">HttpWrapper</string>
               <string name="Source">local HttpService = game:GetService("HttpService")
@@ -3228,7 +5846,7 @@ end
 return HttpWrapper</string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="8">
+          <Item class="ModuleScript" referent="91">
             <Properties>
               <string name="Name">Promise</string>
               <string name="Source"><![CDATA[--[[
@@ -4636,7 +7254,7 @@ return Promise
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="9">
+          <Item class="ModuleScript" referent="92">
             <Properties>
               <string name="Name">Robase</string>
               <string name="Source"><![CDATA[local HttpWrapper = require(script.Parent.HttpWrapper)
@@ -5057,11 +7675,11 @@ return Robase
 ]]></string>
             </Properties>
           </Item>
-          <Item class="Folder" referent="10">
+          <Item class="Folder" referent="93">
             <Properties>
               <string name="Name">UnitTests</string>
             </Properties>
-            <Item class="ModuleScript" referent="11">
+            <Item class="ModuleScript" referent="94">
               <Properties>
                 <string name="Name">HttpWrapper.spec</string>
                 <string name="Source">return function()
@@ -5185,7 +7803,7 @@ return Robase
 end</string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="12">
+            <Item class="ModuleScript" referent="95">
               <Properties>
                 <string name="Name">Robase.spec</string>
                 <string name="Source">return function()
@@ -5475,7 +8093,7 @@ end</string>
 end</string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="13">
+            <Item class="ModuleScript" referent="96">
               <Properties>
                 <string name="Name">RobaseService.spec</string>
                 <string name="Source">return function()
@@ -5531,11 +8149,11 @@ end</string>
       </Item>
     </Item>
   </Item>
-  <Item class="Workspace" referent="14">
+  <Item class="Workspace" referent="97">
     <Properties>
       <string name="Name">Workspace</string>
     </Properties>
-    <Item class="Part" referent="15">
+    <Item class="Part" referent="98">
       <Properties>
         <string name="Name">Baseplate</string>
         <bool name="Anchored">true</bool>
@@ -5552,7 +8170,7 @@ end</string>
           <Z>128</Z>
         </Vector3>
       </Properties>
-      <Item class="Texture" referent="16">
+      <Item class="Texture" referent="99">
         <Properties>
           <string name="Name">Texture</string>
           <Color3 name="Color3">

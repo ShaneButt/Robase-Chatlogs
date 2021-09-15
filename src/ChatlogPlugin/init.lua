@@ -16,23 +16,15 @@ local Vendor = script:FindFirstChild("Vendor")
 local Plugin = {  }
 Plugin.Dependencies = {
 	Promise = require(Vendor:FindFirstChild("Promise")),
-	RobaseService = require(Vendor:FindFirstChild("RobaseService")),
+	Llama = require(Vendor:FindFirstChild("Llama"))
 }
-Plugin.ChatHistory = {  }
+
+local Dictionary = Plugin.Dependencies.Llama.Dictionary
+
+Plugin.ChatHistory = Dictionary.fromLists({},{})
 Plugin.Promises = {  }
 Plugin.IsCollecting = false
 
---[[ Plugin.Promises.CollectChatFor = Plugin.Dependencies.Promise.promisify(function(self, duration)
-	local dt = 0
-	Plugin.IsCollecting = true
-	while dt < duration and self.IsCollecting do
-		local step = RunService.Heartbeat:Wait()
-		print(step)
-		dt += step
-	end
-
-	return dt >= duration, dt
-end) ]]
 
 Plugin.CollectChatFor = function(self, duration)
 	local dt = 0
@@ -52,24 +44,24 @@ end
 
 function Plugin.collect(chatData)
 	if Plugin.IsCollecting then
-		print(chatData)
+		local speaker = tostring(chatData.SpeakerUserId)
+		local state = Dictionary.copyDeep(Plugin.ChatHistory)
 
-		Plugin.ChatHistory[tostring(chatData.SpeakerUserId)] = {
+		if not state[speaker] then
+			state = Dictionary.set(state, speaker, {})
+		end
+
+		local messages = Dictionary.mergeDeep(state[speaker], {
 			[tostring(chatData.ID)] = {
 				Content = chatData.Message,
 				Channel = chatData.OriginalChannel,
 				Time = DateTime.fromUnixTimestamp(chatData.Time)
 			}
-		}
-	end
+		})
 
-	local speaker = chatData.SpeakerUserId
-	local speakerMessages = Plugin.ChatHistory[speaker]
-	speakerMessages[tostring(chatData.ID)] = {
-		Content = chatData.Message,
-		Channel = chatData.OriginalChannel,
-		Time = DateTime.fromUnixTimestamp(chatData.Time)
-	}
+		state[speaker] = messages
+		Plugin.ChatHistory = state
+	end
 
 	return chatData
 end
@@ -89,8 +81,23 @@ function Plugin.stop()
 	Plugin.IsCollecting = false
 end
 
-function Plugin.runCycle(captureDuration, cycleCount)
-	
+function Plugin.saveTo(robase, key)
+	local logs = Dictionary.copyDeep(Plugin.ChatHistory)
+
+	robase:UpdateAsync(key, function(oldData)
+		local prev = Dictionary.copyDeep(oldData)
+
+		return Dictionary.mergeDeep(logs, prev)
+	end)
+end
+
+function Plugin.startRecording(robase, key, autoSaveInterval)
+	Plugin.Dependencies.Promise.try(function()
+		while true do
+			Plugin.start(autoSaveInterval)
+			Plugin.Dependencies.Promise.delay(autoSaveInterval):andThenCall(Plugin.saveTo, robase, key)
+		end
+	end)
 end
 
 return Plugin
