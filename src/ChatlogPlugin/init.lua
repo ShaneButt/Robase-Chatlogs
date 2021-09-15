@@ -34,7 +34,7 @@ Plugin.IsCollecting = false
 	return dt >= duration, dt
 end) ]]
 
-Plugin.Promises.CollectChatFor = function(self, duration)
+Plugin.CollectChatFor = function(self, duration)
 	local dt = 0
 	self.IsCollecting = true
 	return Plugin.Dependencies.Promise.fromEvent(RunService.Heartbeat, function(step)
@@ -53,6 +53,7 @@ end
 function Plugin.collect(chatData)
 	if Plugin.IsCollecting then
 		print(chatData)
+
 		Plugin.ChatHistory[tostring(chatData.SpeakerUserId)] = {
 			[tostring(chatData.ID)] = {
 				Content = chatData.Message,
@@ -61,6 +62,15 @@ function Plugin.collect(chatData)
 			}
 		}
 	end
+
+	local speaker = chatData.SpeakerUserId
+	local speakerMessages = Plugin.ChatHistory[speaker]
+	speakerMessages[tostring(chatData.ID)] = {
+		Content = chatData.Message,
+		Channel = chatData.OriginalChannel,
+		Time = DateTime.fromUnixTimestamp(chatData.Time)
+	}
+
 	return chatData
 end
 
@@ -68,7 +78,7 @@ function Plugin.start(duration)
 	ChatService:RegisterChatCallback(Enum.ChatCallbackType.OnServerReceivingMessage, Plugin.collect)
 
 	print("Collecting Chatlogs")
-	Plugin.Promises.CollectChatFor(Plugin, duration):andThen(function(step)
+	Plugin.CollectChatFor(Plugin, duration):andThen(function()
 		print("Finished Collection")
 		Plugin.stop()
 		print(Plugin.ChatHistory)
@@ -77,6 +87,10 @@ end
 
 function Plugin.stop()
 	Plugin.IsCollecting = false
+end
+
+function Plugin.runCycle(captureDuration, cycleCount)
+	
 end
 
 return Plugin

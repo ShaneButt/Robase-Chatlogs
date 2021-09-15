@@ -16,22 +16,103 @@
 		The goal of this plugin is to be simple to use, easy to implement, and light on
 		budget calls.
 ]]
+local RunService = game:GetService("RunService")
+local ChatService = game:GetService("Chat")
 
 local Vendor = script:FindFirstChild("Vendor")
 
-local Plugin = {}
+local Plugin = {  }
 Plugin.Dependencies = {
-	--Promise = require(Vendor:FindFirstChild("Promise")),
+	Promise = require(Vendor:FindFirstChild("Promise")),
 	RobaseService = require(Vendor:FindFirstChild("RobaseService")),
 }
+Plugin.ChatHistory = {  }
+Plugin.Promises = {  }
+Plugin.IsCollecting = false
+
+--[[ Plugin.Promises.CollectChatFor = Plugin.Dependencies.Promise.promisify(function(self, duration)
+	local dt = 0
+	Plugin.IsCollecting = true
+	while dt &lt; duration and self.IsCollecting do
+		local step = RunService.Heartbeat:Wait()
+		print(step)
+		dt += step
+	end
+
+	return dt >= duration, dt
+end) ]]
+
+Plugin.CollectChatFor = function(self, duration)
+	local dt = 0
+	self.IsCollecting = true
+	return Plugin.Dependencies.Promise.fromEvent(RunService.Heartbeat, function(step)
+		dt += step
+		if not self.IsCollecting then
+			return true
+		end
+		if duration ~= 0 and dt >= duration then
+			return true
+		else
+			return false
+		end
+	end)
+end
+
+function Plugin.collect(chatData)
+	if Plugin.IsCollecting then
+		print(chatData)
+
+		Plugin.ChatHistory[tostring(chatData.SpeakerUserId)] = {
+			[tostring(chatData.ID)] = {
+				Content = chatData.Message,
+				Channel = chatData.OriginalChannel,
+				Time = DateTime.fromUnixTimestamp(chatData.Time)
+			}
+		}
+	end
+	return chatData
+end
+
+function Plugin.start(duration)
+	ChatService:RegisterChatCallback(Enum.ChatCallbackType.OnServerReceivingMessage, Plugin.collect)
+
+	print("Collecting Chatlogs")
+	Plugin.CollectChatFor(Plugin, duration):andThen(function()
+		print("Finished Collection")
+		Plugin.stop()
+		print(Plugin.ChatHistory)
+	end)
+end
+
+function Plugin.stop()
+	Plugin.IsCollecting = false
+end
+
+function Plugin.runCycle(captureDuration, cycleCount)
+	
+end
 
 return Plugin</string>
       </Properties>
-      <Item class="Folder" referent="2">
+      <Item class="Script" referent="2">
+        <Properties>
+          <string name="Name">test</string>
+          <string name="Source">local plugin = require(script.Parent)
+
+game.Players.PlayerAdded:Connect(function(player)
+		player.CharacterAppearanceLoaded:Connect(function(character)
+		print("waiting")
+		task.wait(10)
+		plugin.start(60)
+	end)
+end)</string>
+        </Properties>
+      </Item>
+      <Item class="Folder" referent="3">
         <Properties>
           <string name="Name">Vendor</string>
         </Properties>
-        <Item class="ModuleScript" referent="3">
+        <Item class="ModuleScript" referent="4">
           <Properties>
             <string name="Name">Promise</string>
             <string name="Source"><![CDATA[--[[
@@ -1435,7 +1516,7 @@ end
 return Promise
 ]]></string>
           </Properties>
-          <Item class="ModuleScript" referent="4">
+          <Item class="ModuleScript" referent="5">
             <Properties>
               <string name="Name">init.spec</string>
               <string name="Source"><![CDATA[return function()
@@ -3060,7 +3141,7 @@ end
             </Properties>
           </Item>
         </Item>
-        <Item class="ModuleScript" referent="5">
+        <Item class="ModuleScript" referent="6">
           <Properties>
             <string name="Name">RobaseService</string>
             <string name="Source">local Robase = require(script.Robase)
@@ -3109,7 +3190,7 @@ end
 
 return RobaseService</string>
           </Properties>
-          <Item class="ModuleScript" referent="6">
+          <Item class="ModuleScript" referent="7">
             <Properties>
               <string name="Name">HttpWrapper</string>
               <string name="Source">local HttpService = game:GetService("HttpService")
@@ -3147,7 +3228,7 @@ end
 return HttpWrapper</string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="7">
+          <Item class="ModuleScript" referent="8">
             <Properties>
               <string name="Name">Promise</string>
               <string name="Source"><![CDATA[--[[
@@ -4555,7 +4636,7 @@ return Promise
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="8">
+          <Item class="ModuleScript" referent="9">
             <Properties>
               <string name="Name">Robase</string>
               <string name="Source"><![CDATA[local HttpWrapper = require(script.Parent.HttpWrapper)
@@ -4976,11 +5057,11 @@ return Robase
 ]]></string>
             </Properties>
           </Item>
-          <Item class="Folder" referent="9">
+          <Item class="Folder" referent="10">
             <Properties>
               <string name="Name">UnitTests</string>
             </Properties>
-            <Item class="ModuleScript" referent="10">
+            <Item class="ModuleScript" referent="11">
               <Properties>
                 <string name="Name">HttpWrapper.spec</string>
                 <string name="Source">return function()
@@ -5104,7 +5185,7 @@ return Robase
 end</string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="11">
+            <Item class="ModuleScript" referent="12">
               <Properties>
                 <string name="Name">Robase.spec</string>
                 <string name="Source">return function()
@@ -5394,7 +5475,7 @@ end</string>
 end</string>
               </Properties>
             </Item>
-            <Item class="ModuleScript" referent="12">
+            <Item class="ModuleScript" referent="13">
               <Properties>
                 <string name="Name">RobaseService.spec</string>
                 <string name="Source">return function()
@@ -5447,6 +5528,46 @@ end</string>
             </Item>
           </Item>
         </Item>
+      </Item>
+    </Item>
+  </Item>
+  <Item class="Workspace" referent="14">
+    <Properties>
+      <string name="Name">Workspace</string>
+    </Properties>
+    <Item class="Part" referent="15">
+      <Properties>
+        <string name="Name">Baseplate</string>
+        <bool name="Anchored">true</bool>
+        <Color3uint8 name="Color3uint8">2064413</Color3uint8>
+        <bool name="Locked">true</bool>
+        <Vector3 name="Position">
+          <X>0</X>
+          <Y>-2</Y>
+          <Z>0</Z>
+        </Vector3>
+        <Vector3 name="size">
+          <X>128</X>
+          <Y>4</Y>
+          <Z>128</Z>
+        </Vector3>
+      </Properties>
+      <Item class="Texture" referent="16">
+        <Properties>
+          <string name="Name">Texture</string>
+          <Color3 name="Color3">
+            <R>0</R>
+            <G>0</G>
+            <B>0</B>
+          </Color3>
+          <token name="Face">1</token>
+          <float name="StudsPerTileU">8</float>
+          <float name="StudsPerTileV">8</float>
+          <Content name="Texture">
+            <url>rbxassetid://6372755229</url>
+          </Content>
+          <float name="Transparency">0.5</float>
+        </Properties>
       </Item>
     </Item>
   </Item>

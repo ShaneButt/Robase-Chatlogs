@@ -18,10 +18,10 @@
           "$className": "Folder",
             
           "RobaseService": {
-            "$path": "dependencies/@robase/src/RobaseService"
+            "$path": "dependencies/@robase/src"
           },
           "Promise": {
-            "$path": "dependencies/@promise/lib"
+            "$path": "dependencies/@promise/src"
           }
         }
 
