@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/freddylist/llama
+	branch = master
+	commit = 0b03cbe4f7088024cfa5ab5d5b873b615c917e7e
+	parent = 91b59b2104353a3c3c8aaf6fa684cedc6bed178e
+	method = merge
+	cmdver = 0.4.3
